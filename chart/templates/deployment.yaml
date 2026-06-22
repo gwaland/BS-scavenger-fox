@@ -1,0 +1,73 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "scavenger-fox.fullname" . }}
+  labels:
+    {{- include "scavenger-fox.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "scavenger-fox.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "scavenger-fox.selectorLabels" . | nindent 8 }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "scavenger-fox.serviceAccountName" . }}
+      containers:
+        - name: fox-central-command
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+          ports:
+            - name: http
+              containerPort: {{ .Values.service.targetPort }}
+              protocol: TCP
+          env:
+            - name: NODE_ENV
+              value: {{ .Values.app.env.nodeEnv | quote }}
+            - name: PORT
+              value: {{ .Values.app.env.port | quote }}
+            - name: ASSET_STORAGE_PATH
+              value: {{ .Values.app.env.assetStoragePath | quote }}
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "scavenger-fox.database.secretName" . }}
+                  key: {{ include "scavenger-fox.database.urlKey" . }}
+            - name: PHOTO_REVIEW_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "scavenger-fox.appSecrets.secretName" . }}
+                  key: {{ include "scavenger-fox.appSecrets.photoReviewTokenKey" . }}
+            - name: ADMIN_API_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "scavenger-fox.appSecrets.secretName" . }}
+                  key: {{ include "scavenger-fox.appSecrets.adminApiTokenKey" . }}
+          livenessProbe:
+            {{- toYaml .Values.livenessProbe | nindent 12 }}
+          readinessProbe:
+            {{- toYaml .Values.readinessProbe | nindent 12 }}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          volumeMounts:
+            - name: app-assets
+              mountPath: {{ .Values.app.env.assetStoragePath }}
+      volumes:
+        - name: app-assets
+          {{- if .Values.assetsPersistence.enabled }}
+          persistentVolumeClaim:
+            claimName: {{ include "scavenger-fox.assets.pvcName" . }}
+          {{- else }}
+          emptyDir: {}
+          {{- end }}

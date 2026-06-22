@@ -1,0 +1,12 @@
+# Editor and OS noise
+.DS_Store
+*.swp
+*.swo
+
+# Common local IDE state
+.idea/
+.vscode/
+
+# Temporary local render/debug output
+*.rendered.yaml
+*.tmp

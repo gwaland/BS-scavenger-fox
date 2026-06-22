@@ -1,0 +1,36 @@
+name: Helm Chart Checks
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+      - chore/**
+
+jobs:
+  helm-checks:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Helm
+        uses: azure/setup-helm@v4
+
+      - name: Lint chart
+        run: helm lint chart
+
+      - name: Render default external database path
+        run: helm template scavenger-fox chart >/tmp/scavenger-fox-default.yaml
+
+      - name: Render bundled PostgreSQL path
+        run: helm template scavenger-fox chart --set postgresql.enabled=true >/tmp/scavenger-fox-bundled-postgres.yaml
+
+      - name: Verify external database config is required when bundled PostgreSQL is disabled
+        run: |
+          if helm template scavenger-fox chart --set postgresql.enabled=false --set database.existingSecret= --set database.urlKey= >/tmp/should-not-render.yaml 2>/tmp/render.err; then
+            echo "expected render failure when external database secret config is missing"
+            exit 1
+          fi
+          grep -q "database.existingSecret must be set" /tmp/render.err
