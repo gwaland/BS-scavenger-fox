@@ -48,31 +48,6 @@ secrets:
   photoReviewTokenKey: PHOTO_REVIEW_TOKEN
   adminApiTokenKey: ADMIN_API_TOKEN
 
-postgresql:
-  enabled: false
-  image:
-    repository: postgres
-    tag: "16-alpine"
-    pullPolicy: IfNotPresent
-  auth:
-    username: scavenger_fox
-    password: change-me-postgres-password
-    database: scavenger_fox
-  service:
-    port: 5432
-  persistence:
-    enabled: true
-    storageClass: ""
-    accessMode: ReadWriteOnce
-    size: 8Gi
-  resources:
-    requests:
-      cpu: 50m
-      memory: 128Mi
-    limits:
-      cpu: 500m
-      memory: 512Mi
-
 database:
   existingSecret: fcc-database
   urlKey: DATABASE_URL
@@ -124,9 +99,9 @@ networkPolicy:
     postgres:
       enabled: true
       port: 5432
-      # POC-only: lock this down once the external PostgreSQL endpoint is known.
-      cidrs:
-        - 0.0.0.0/0
+      podSelector:
+        app.kubernetes.io/name: fcc-postgres
+        app.kubernetes.io/instance: fcc-postgres
 
 nodeSelector: {}
 tolerations: []

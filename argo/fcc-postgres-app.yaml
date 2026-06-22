@@ -1,16 +1,16 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: scavenger-fox
+  name: fcc-postgres
   namespace: argocd
   annotations:
-    argocd.argoproj.io/sync-wave: "1"
+    argocd.argoproj.io/sync-wave: "0"
 spec:
   project: default
   source:
     repoURL: 'git@github.com:gwaland/BS-scavenger-fox.git'
     targetRevision: main
-    path: chart
+    path: fcc-postgres
     helm:
       skipCrds: true
   destination:

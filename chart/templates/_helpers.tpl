@@ -59,35 +59,12 @@ Service account name.
 {{- end }}
 {{- end }}
 
-{{/*
-PostgreSQL names.
-*/}}
-{{- define "scavenger-fox.postgresql.fullname" -}}
-{{- printf "%s-postgresql" (include "scavenger-fox.fullname" .) | trunc 63 | trimSuffix "-" }}
-{{- end }}
-
-{{- define "scavenger-fox.postgresql.secretName" -}}
-{{- printf "%s-postgresql" (include "scavenger-fox.fullname" .) | trunc 63 | trimSuffix "-" }}
-{{- end }}
-
-{{- define "scavenger-fox.backend.secretName" -}}
-{{- printf "%s-backend" (include "scavenger-fox.fullname" .) | trunc 63 | trimSuffix "-" }}
-{{- end }}
-
 {{- define "scavenger-fox.database.secretName" -}}
-{{- if .Values.postgresql.enabled -}}
-{{ include "scavenger-fox.postgresql.secretName" . }}
-{{- else -}}
-{{- required "database.existingSecret must be set when postgresql.enabled=false" .Values.database.existingSecret -}}
-{{- end -}}
+{{- required "database.existingSecret must be set" .Values.database.existingSecret -}}
 {{- end }}
 
 {{- define "scavenger-fox.database.urlKey" -}}
-{{- if .Values.postgresql.enabled -}}
-DATABASE_URL
-{{- else -}}
-{{- required "database.urlKey must be set when postgresql.enabled=false" .Values.database.urlKey -}}
-{{- end -}}
+{{- required "database.urlKey must be set" .Values.database.urlKey -}}
 {{- end }}
 
 {{- define "scavenger-fox.appSecrets.secretName" -}}
@@ -104,8 +81,4 @@ DATABASE_URL
 
 {{- define "scavenger-fox.assets.pvcName" -}}
 {{- printf "%s-assets" (include "scavenger-fox.fullname" .) | trunc 63 | trimSuffix "-" }}
-{{- end }}
-
-{{- define "scavenger-fox.postgresql.databaseUrl" -}}
-{{- printf "postgres://%s:%s@%s:%v/%s" .Values.postgresql.auth.username .Values.postgresql.auth.password (include "scavenger-fox.postgresql.fullname" .) .Values.postgresql.service.port .Values.postgresql.auth.database }}
 {{- end }}
