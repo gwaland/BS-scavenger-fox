@@ -1,0 +1,17 @@
+{{- if .Values.assetsPersistence.enabled }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "scavenger-fox.assets.pvcName" . }}
+  labels:
+    {{- include "scavenger-fox.labels" . | nindent 4 }}
+spec:
+  accessModes:
+    - {{ .Values.assetsPersistence.accessMode }}
+  resources:
+    requests:
+      storage: {{ .Values.assetsPersistence.size }}
+  {{- with .Values.assetsPersistence.storageClass }}
+  storageClassName: {{ . | quote }}
+  {{- end }}
+{{- end }}
