@@ -18,19 +18,30 @@ jobs:
       - name: Setup Helm
         uses: azure/setup-helm@v4
 
-      - name: Lint chart
+      - name: Lint FCC app chart
         run: helm lint chart
 
-      - name: Render default external database path
+      - name: Lint FCC Postgres chart
+        run: helm lint fcc-postgres
+
+      - name: Render FCC app default database path
         run: helm template scavenger-fox chart >/tmp/scavenger-fox-default.yaml
 
-      - name: Render bundled PostgreSQL path
-        run: helm template scavenger-fox chart --set postgresql.enabled=true >/tmp/scavenger-fox-bundled-postgres.yaml
+      - name: Render dedicated FCC Postgres chart
+        run: helm template fcc-postgres fcc-postgres >/tmp/fcc-postgres.yaml
 
-      - name: Verify external database config is required when bundled PostgreSQL is disabled
+      - name: Verify FCC app external database config is required
         run: |
-          if helm template scavenger-fox chart --set postgresql.enabled=false --set database.existingSecret= --set database.urlKey= >/tmp/should-not-render.yaml 2>/tmp/render.err; then
+          if helm template scavenger-fox chart --set database.existingSecret= --set database.urlKey= >/tmp/should-not-render.yaml 2>/tmp/render.err; then
             echo "expected render failure when external database secret config is missing"
             exit 1
           fi
           grep -q "database.existingSecret must be set" /tmp/render.err
+
+      - name: Verify FCC Postgres auth secret config is required
+        run: |
+          if helm template fcc-postgres fcc-postgres --set auth.existingSecret= --set auth.passwordKey= >/tmp/should-not-render-postgres.yaml 2>/tmp/postgres-render.err; then
+            echo "expected render failure when postgres auth secret config is missing"
+            exit 1
+          fi
+          grep -q "auth.existingSecret must be set" /tmp/postgres-render.err

@@ -22,26 +22,14 @@ spec:
             matchLabels:
               kubernetes.io/metadata.name: kube-system
   egress:
-    {{- if .Values.postgresql.enabled }}
+    {{- if .Values.networkPolicy.egress.postgres.enabled }}
     - to:
         - podSelector:
             matchLabels:
-              app.kubernetes.io/name: {{ include "scavenger-fox.name" . }}-postgresql
-              app.kubernetes.io/instance: {{ .Release.Name }}
-      ports:
-        - protocol: TCP
-          port: {{ .Values.postgresql.service.port }}
-    {{- else }}
-    {{- if .Values.networkPolicy.egress.postgres.enabled }}
-    - to:
-        {{- range .Values.networkPolicy.egress.postgres.cidrs }}
-        - ipBlock:
-            cidr: {{ . | quote }}
-        {{- end }}
+              {{- toYaml .Values.networkPolicy.egress.postgres.podSelector | nindent 14 }}
       ports:
         - protocol: TCP
           port: {{ .Values.networkPolicy.egress.postgres.port }}
-    {{- end }}
     {{- end }}
     - ports:
         - port: 53

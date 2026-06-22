@@ -4,27 +4,23 @@ GitOps deployment repo for `scavenger-fox` on k3s via Helm and Argo CD.
 
 ## What is here
 
-- `chart/`: Helm chart for Fox Central Command, PostgreSQL, PVCs, ingress, and network policies
-- `argo/scavenger-fox-app.yaml`: Argo CD `Application` manifest for this repo
+- `chart/`: Helm chart for the Fox Central Command application
+- `fcc-postgres/`: Helm chart for the dedicated in-cluster Fox Central Command PostgreSQL instance
+- `argo/fcc-postgres-app.yaml`: Argo CD `Application` manifest for the PostgreSQL infra app
+- `argo/scavenger-fox-app.yaml`: Argo CD `Application` manifest for the Fox Central Command app
 
 ## Current assumptions
 
 - This repo deploys the backend app `apps/fox-central-command` from the main `scavenger-fox` source repo.
 - Fox Finder mobile builds are handled separately and are not deployed by this chart.
-- PostgreSQL is treated as external/shared infrastructure by default.
+- PostgreSQL is treated as dedicated infrastructure for Fox Central Command and is deployed separately from the app chart.
 - Asset uploads are stored on a PVC for now.
 - The backend image is expected at `ghcr.io/gwaland/fox-central-command-backend`.
 - The backend image tag remains configurable in `chart/values.yaml` and currently defaults to `latest`.
 - Public ingress hostname is `fcc.bluestripes.net`.
 - The ingress TLS secret reference is `fcc-bluestripes-net-tls`.
 - Seed data is enabled by default for the POC via `seed.enabled=true` and runs only on install.
-- External/shared PostgreSQL is the default POC path.
-- Bundled in-cluster PostgreSQL remains available as an optional dev/demo mode.
 - App tokens are consumed from a pre-created Kubernetes Secret by default.
-
-## Before live deployment
-
-- Tighten external database network policy egress once the shared PostgreSQL address range is pinned down.
 
 ## Seed behavior
 
@@ -35,8 +31,7 @@ GitOps deployment repo for `scavenger-fox` on k3s via Helm and Argo CD.
 
 ## Database behavior
 
-- `postgresql.enabled=false` by default, so the chart expects a shared PostgreSQL instance.
-- The preferred external secret shape is:
+- The app chart expects a pre-created database connection secret:
 
 ```yaml
 database:
@@ -44,11 +39,44 @@ database:
   urlKey: DATABASE_URL
 ```
 
-- When `postgresql.enabled=false`, the chart fails clearly unless `database.existingSecret` and `database.urlKey` are set.
-- A dedicated Fox Central Command database and user are still expected on the shared PostgreSQL server.
-- Setting `postgresql.enabled=true` switches back to the bundled in-cluster PostgreSQL path for dev/demo use.
-- External PostgreSQL egress is configurable in `networkPolicy.egress.postgres`.
-- The POC default is broad egress only for TCP/5432, and it should be locked down once the external PostgreSQL endpoint is known.
+- The app chart fails clearly unless `database.existingSecret` and `database.urlKey` are set.
+- The dedicated PostgreSQL instance lives in its own chart and Argo app, with PVC-backed storage.
+- The default database details for that instance are:
+  - service: `fcc-postgres.scavenger-fox.svc.cluster.local`
+  - database: `fox_central_command`
+  - app user: `fcc_app`
+- The app network policy expects PostgreSQL pods labeled as:
+  - `app.kubernetes.io/name=fcc-postgres`
+  - `app.kubernetes.io/instance=fcc-postgres`
+
+## PostgreSQL infra behavior
+
+- `fcc-postgres/` deploys a dedicated single-instance PostgreSQL `StatefulSet` with a PVC.
+- The chart expects a pre-created auth secret:
+
+```yaml
+auth:
+  existingSecret: fcc-postgres-auth
+  passwordKey: POSTGRES_PASSWORD
+  username: fcc_app
+  database: fox_central_command
+```
+
+- The PostgreSQL chart fails clearly unless `auth.existingSecret` and `auth.passwordKey` are set.
+- On first boot, the official PostgreSQL image creates the `fox_central_command` database and the `fcc_app` role using those settings.
+- One way to create the secret for the POC is:
+
+```sh
+kubectl -n scavenger-fox create secret generic fcc-postgres-auth \
+  --from-literal=POSTGRES_PASSWORD='replace-me-postgres-password'
+```
+
+- After that secret exists, create the app connection secret in the same namespace:
+
+```sh
+kubectl -n scavenger-fox create secret generic fcc-database \
+  --from-literal=DATABASE_URL='postgresql://fcc_app:replace-me-postgres-password@fcc-postgres.scavenger-fox.svc.cluster.local:5432/fox_central_command'
+```
 
 ## App secret behavior
 
@@ -80,10 +108,15 @@ kubectl -n scavenger-fox create secret generic fcc-app-secrets \
 ## Apply through Argo CD
 
 ```sh
+kubectl apply -f argo/fcc-postgres-app.yaml
 kubectl apply -f argo/scavenger-fox-app.yaml
 ```
+
+- Apply the PostgreSQL app first.
+- Wait for `fcc-postgres` to become healthy and for the PVC to bind.
+- Then apply the Fox Central Command app.
 
 ## CI
 
 - `.github/workflows/helm-chart.yml` runs Helm checks on pushes and PRs.
-- It lints the chart, renders the default external-database path, renders the optional bundled-PostgreSQL path, and verifies the chart fails cleanly when required external database secret config is missing.
+- It lints both charts, renders both charts, and verifies both fail cleanly when their required secret references are missing.

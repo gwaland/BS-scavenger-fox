@@ -1,0 +1,39 @@
+image:
+  repository: postgres
+  tag: "16-alpine"
+  pullPolicy: IfNotPresent
+
+fullnameOverride: fcc-postgres
+
+service:
+  port: 5432
+
+auth:
+  existingSecret: fcc-postgres-auth
+  passwordKey: POSTGRES_PASSWORD
+  username: fcc_app
+  database: fox_central_command
+
+persistence:
+  enabled: true
+  storageClass: ""
+  accessMode: ReadWriteOnce
+  size: 8Gi
+
+resources:
+  requests:
+    cpu: 50m
+    memory: 128Mi
+  limits:
+    cpu: 500m
+    memory: 512Mi
+
+networkPolicy:
+  enabled: true
+  ingressFrom:
+    - app.kubernetes.io/name: scavenger-fox
+      app.kubernetes.io/instance: scavenger-fox
+
+nodeSelector: {}
+tolerations: []
+affinity: {}
