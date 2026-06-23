@@ -40,11 +40,6 @@ spec:
                 secretKeyRef:
                   name: {{ include "scavenger-fox.database.secretName" . }}
                   key: {{ include "scavenger-fox.database.urlKey" . }}
-            - name: PHOTO_REVIEW_TOKEN
-              valueFrom:
-                secretKeyRef:
-                  name: {{ include "scavenger-fox.appSecrets.secretName" . }}
-                  key: {{ include "scavenger-fox.appSecrets.photoReviewTokenKey" . }}
             - name: ADMIN_API_TOKEN
               valueFrom:
                 secretKeyRef:

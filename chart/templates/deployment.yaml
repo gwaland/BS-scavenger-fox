@@ -39,16 +39,15 @@ spec:
               value: {{ .Values.app.env.port | quote }}
             - name: ASSET_STORAGE_PATH
               value: {{ .Values.app.env.assetStoragePath | quote }}
+            - name: ADMIN_PUBLIC_BASE_URL
+              value: {{ .Values.app.env.adminPublicBaseUrl | quote }}
+            - name: ADMIN_ALLOWED_ORIGINS
+              value: {{ .Values.app.env.adminAllowedOrigins | quote }}
             - name: DATABASE_URL
               valueFrom:
                 secretKeyRef:
                   name: {{ include "scavenger-fox.database.secretName" . }}
                   key: {{ include "scavenger-fox.database.urlKey" . }}
-            - name: PHOTO_REVIEW_TOKEN
-              valueFrom:
-                secretKeyRef:
-                  name: {{ include "scavenger-fox.appSecrets.secretName" . }}
-                  key: {{ include "scavenger-fox.appSecrets.photoReviewTokenKey" . }}
             - name: ADMIN_API_TOKEN
               valueFrom:
                 secretKeyRef:
