@@ -3,7 +3,7 @@ replicaCount: 1
 image:
   repository: ghcr.io/gwaland/fox-central-command-backend
   pullPolicy: Always
-  tag: "latest"
+  tag: "f41bdc22894f9c9cfa3ad6b8bb30c54143faf445"
 
 imagePullSecrets:
   - name: ghcr-secret
