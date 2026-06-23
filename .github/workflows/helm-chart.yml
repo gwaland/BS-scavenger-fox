@@ -27,6 +27,17 @@ jobs:
       - name: Render FCC app default database path
         run: helm template scavenger-fox chart >/tmp/scavenger-fox-default.yaml
 
+      - name: Verify FCC app render matches M14 env contract
+        run: |
+          grep -q 'name: ADMIN_PUBLIC_BASE_URL' /tmp/scavenger-fox-default.yaml
+          grep -q 'value: "https://fcc.bluestripes.net/admin"' /tmp/scavenger-fox-default.yaml
+          grep -q 'name: ADMIN_ALLOWED_ORIGINS' /tmp/scavenger-fox-default.yaml
+          grep -q 'value: "https://fcc.bluestripes.net"' /tmp/scavenger-fox-default.yaml
+          if grep -q 'PHOTO_REVIEW_TOKEN' /tmp/scavenger-fox-default.yaml; then
+            echo "PHOTO_REVIEW_TOKEN should not be rendered for the M14 chart"
+            exit 1
+          fi
+
       - name: Render dedicated FCC Postgres chart
         run: helm template fcc-postgres fcc-postgres >/tmp/fcc-postgres.yaml
 

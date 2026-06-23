@@ -42,10 +42,11 @@ app:
     nodeEnv: production
     port: 3000
     assetStoragePath: /app/data/assets
+    adminPublicBaseUrl: https://fcc.bluestripes.net/admin
+    adminAllowedOrigins: https://fcc.bluestripes.net
 
 secrets:
   existingSecret: fcc-app-secrets
-  photoReviewTokenKey: PHOTO_REVIEW_TOKEN
   adminApiTokenKey: ADMIN_API_TOKEN
 
 database:

@@ -71,10 +71,6 @@ Service account name.
 {{- required "secrets.existingSecret must be set" .Values.secrets.existingSecret -}}
 {{- end }}
 
-{{- define "scavenger-fox.appSecrets.photoReviewTokenKey" -}}
-{{- required "secrets.photoReviewTokenKey must be set" .Values.secrets.photoReviewTokenKey -}}
-{{- end }}
-
 {{- define "scavenger-fox.appSecrets.adminApiTokenKey" -}}
 {{- required "secrets.adminApiTokenKey must be set" .Values.secrets.adminApiTokenKey -}}
 {{- end }}

@@ -16,7 +16,8 @@ GitOps deployment repo for `scavenger-fox` on k3s via Helm and Argo CD.
 - PostgreSQL is treated as dedicated infrastructure for Fox Central Command and is deployed separately from the app chart.
 - Asset uploads are stored on a PVC for now.
 - The backend image is expected at `ghcr.io/gwaland/fox-central-command-backend`.
-- The backend image tag remains configurable in `chart/values.yaml` and currently defaults to `latest`.
+- The backend image tag remains configurable in `chart/values.yaml`.
+- App repo CI publishes immutable commit-SHA image tags; the deploy repo should be bumped to one of those immutable tags rather than relying on `latest`.
 - Public ingress hostname is `fcc.bluestripes.net`.
 - The ingress TLS secret reference is `fcc-bluestripes-net-tls`.
 - Seed data is enabled by default for the POC via `seed.enabled=true` and runs only on install.
@@ -129,3 +130,9 @@ kubectl apply -f argo/scavenger-fox-app.yaml
 
 - `.github/workflows/helm-chart.yml` runs Helm checks on pushes and PRs.
 - It lints both charts, renders both charts, and verifies both fail cleanly when their required secret references are missing.
+
+## Image update behavior
+
+- `scavenger-fox` publishes `ghcr.io/gwaland/fox-central-command-backend` as `latest` and as the source commit SHA after `CI` succeeds on `main`.
+- The publisher then opens a PR back to this repo to update `chart/values.yaml` to that immutable SHA tag.
+- Argo CD only rolls the app when this repo changes; pushing a new `latest` image alone is not enough to create a GitOps diff.
