@@ -22,6 +22,13 @@ GitOps deployment repo for `scavenger-fox` on k3s via Helm and Argo CD.
 - Seed data is enabled by default for the POC via `seed.enabled=true` and runs only on install.
 - App tokens are consumed from a pre-created Kubernetes Secret by default.
 
+## Public edge behavior
+
+- `fcc.bluestripes.net` also requires a matching Cloudflare Tunnel hostname entry in `/home/gwaland/git-k3s/argo-lab-config.git/applications/networking/cloudflare-tunnel/cloudflare-tunnel-config.yaml`.
+- Merging the tunnel-config PR updates the live ConfigMap through Argo CD, but the `cloudflared` pods may still need a rollout restart before the hostname begins serving externally.
+- The best external smoke test for this backend is `https://fcc.bluestripes.net/health`.
+- `https://fcc.bluestripes.net/` returning `404` is expected for the current backend-only deployment and does not indicate an ingress or Cloudflare failure.
+
 ## Seed behavior
 
 - `seed.enabled` defaults to `true` for the POC.
@@ -77,6 +84,8 @@ kubectl -n scavenger-fox create secret generic fcc-postgres-auth \
 kubectl -n scavenger-fox create secret generic fcc-database \
   --from-literal=DATABASE_URL='postgresql://fcc_app:replace-me-postgres-password@fcc-postgres.scavenger-fox.svc.cluster.local:5432/fox_central_command'
 ```
+
+- If the database password contains reserved URL characters such as `/`, `@`, or `:`, URL-encode the password segment before storing `DATABASE_URL`.
 
 ## App secret behavior
 
