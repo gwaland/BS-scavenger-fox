@@ -8,7 +8,7 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: 'git@github.com:gwaland/BS-scavenger-fox.git'
+    repoURL: 'https://github.com/gwaland/BS-scavenger-fox.git'
     targetRevision: main
     path: fcc-postgres
     helm:
