@@ -63,7 +63,7 @@ migrationJob:
   enabled: true
 
 seed:
-  enabled: true
+  enabled: false
 
 resources:
   requests:
