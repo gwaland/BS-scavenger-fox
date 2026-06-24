@@ -20,7 +20,7 @@ GitOps deployment repo for `scavenger-fox` on k3s via Helm and Argo CD.
 - App repo CI publishes immutable commit-SHA image tags; the deploy repo should be bumped to one of those immutable tags rather than relying on `latest`.
 - Public ingress hostname is `fcc.bluestripes.net`.
 - The ingress TLS secret reference is `fcc-bluestripes-net-tls`.
-- Seed data is enabled by default for the POC via `seed.enabled=true` and runs only on install.
+- Seed data is disabled by default via `seed.enabled=false`; enable it explicitly if a fresh install needs the demo seed.
 - App tokens are consumed from a pre-created Kubernetes Secret by default.
 
 ## Public edge behavior
@@ -32,7 +32,7 @@ GitOps deployment repo for `scavenger-fox` on k3s via Helm and Argo CD.
 
 ## Seed behavior
 
-- `seed.enabled` defaults to `true` for the POC.
+- `seed.enabled` defaults to `false`.
 - The seed job runs as a Helm `post-install` hook only.
 - It does not run on upgrade.
 - The app seed path is assumed to be idempotent so reruns do not duplicate or clobber data.
