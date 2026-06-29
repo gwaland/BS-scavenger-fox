@@ -20,14 +20,17 @@ spec:
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}
       {{- end }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
       containers:
         - name: migrate
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
+          securityContext:
+            {{- toYaml .Values.containerSecurityContext | nindent 12 }}
           command:
-            - npm
-            - run
-            - db:migrate
+            - ./node_modules/.bin/drizzle-kit
+            - migrate
           env:
             - name: NODE_ENV
               value: {{ .Values.app.env.nodeEnv | quote }}
@@ -45,4 +48,10 @@ spec:
                 secretKeyRef:
                   name: {{ include "scavenger-fox.appSecrets.secretName" . }}
                   key: {{ include "scavenger-fox.appSecrets.adminApiTokenKey" . }}
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: tmp
+          emptyDir: {}
 {{- end }}
